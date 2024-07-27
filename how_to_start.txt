@@ -142,6 +142,20 @@ Session : 5
 Session : 6
 
 22. Deploy to sqlite database as persistant database sqlite.
+	run the command : npm add @cap-js/sqlite -D
+	This will add "devDependencies": {
+    							"@cap-js/sqlite": "^1.7.3", 
+                                       }
+	run the command cds env requires.db
+	you will get output as 
+	{
+  		impl: '@cap-js/sqlite',
+  		credentials: { url: ':memory:' },
+  		kind: 'sqlite'
+	}
+	This is a defult config and try to run deployment from in-memory database.
+	we will overwrite the default configuration from in-memory database to sqlite database with filename as db.sqlite
+	you can also change the filename to booksdata.sqlite as well
 	modify the packages.json file and add the below code
 	"cds": 
 		{ 
@@ -154,6 +168,84 @@ Session : 6
 			}
 		}
 	Then run cds deploy
+	
+23. How to generate UUID using bash
+	Go to terminal and type the command : node and hit enter
+	give the command : > require("crypto").randomUUID()
+	output  : this will generate the UUID
+
+24. if you add an additional aspect country in services.cds
+	using { cuid, managed, Country } from '@sap/cds/common';
+	entity Author : cuid {
+        name : String(30);
+        authorfrom : Country;
+    	}
+	Added new feild authorfrom as Country
+
+	now run the command : cds deploy to reflect the latest changes from services.cds file
+	now run the command : cds c services.cds --to sql
+	output:
+
+	CREATE TABLE bookshop_Books (
+  	ID NVARCHAR(36) NOT NULL,
+  	title NVARCHAR(30),
+  	PRIMARY KEY(ID)
+	);
+
+	CREATE TABLE bookshop_Author (
+  	ID NVARCHAR(36) NOT NULL,
+  	name NVARCHAR(30),
+  	authorfrom_code NVARCHAR(3),
+  	PRIMARY KEY(ID)
+	);
+
+	CREATE TABLE sap_common_Countries (
+  	name NVARCHAR(255),
+  	descr NVARCHAR(1000),
+  	code NVARCHAR(3) NOT NULL,
+  	PRIMARY KEY(code)
+	);
+
+	CREATE TABLE sap_common_Countries_texts (
+  	locale NVARCHAR(14) NOT NULL,
+  	name NVARCHAR(255),
+  	descr NVARCHAR(1000),
+  	code NVARCHAR(3) NOT NULL,
+  	PRIMARY KEY(locale, code)
+	);
+
+	CREATE VIEW bookshop_Countries AS SELECT
+  	Countries_0.name,
+  	Countries_0.descr,
+  	Countries_0.code
+	FROM sap_common_Countries AS Countries_0;
+
+	CREATE VIEW bookshop_Countries_texts AS SELECT
+  	texts_0.locale,
+  	texts_0.name,
+  	texts_0.descr,
+  	texts_0.code
+	FROM sap_common_Countries_texts AS texts_0;
+
+	CREATE VIEW localized_sap_common_Countries AS SELECT
+  	coalesce(localized_1.name, L_0.name) AS name,
+  	coalesce(localized_1.descr, L_0.descr) AS descr,
+  	L_0.code
+	FROM (sap_common_Countries AS L_0 LEFT JOIN sap_common_Countries_texts AS localized_1 ON localized_1.code = L_0.code AND localized_1.locale = session_context( '$user.locale' ));
+
+	CREATE VIEW localized_bookshop_Author AS SELECT
+  	L.ID,
+  	L.name,
+  	L.authorfrom_code
+	FROM bookshop_Author AS L;
+
+	CREATE VIEW localized_bookshop_Countries AS SELECT
+  	Countries_0.name,
+  	Countries_0.descr,
+  	Countries_0.code
+	FROM localized_sap_common_Countries AS Countries_0; 
+	
+25. 
 
 
 
