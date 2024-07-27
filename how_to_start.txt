@@ -276,7 +276,7 @@ Session : 6
 	
 	control + D to come out of sqlite>
 
-Session : 7
+Session : 7-8
 
 26. How to do the profiling
 	User should able to run the application differently from development, production or custom ways
@@ -389,7 +389,18 @@ Session : 7
 
 29. all code from qmacro is avaialbe in git : https://github.com/qmacro/capb2b.git
 
-
+30. To get the common content for country, currency kind of database you can use
+	npm i @sap/cds-common-content
+	sap.common.Countries
+	sap.common.Currencies
+	sap.common.Languages
+	sap.common.Timezones
+	
+	Before you use first you need to install using command : 
+	npm i @sap/cds-common-content
+	
+	and import it in services.cds file
+	using from '@sap/cds-common-content';
 
 sinity
    
