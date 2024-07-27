@@ -1,0 +1,162 @@
+01. Login to BTP
+02. Go to dev space : capmvxj
+03. open folder : /home/user/projects/
+04. open new terminal - install @sap/cds-dk globally by using command : npm add -g @sap/cds-dk
+05. give the command in terminal : cds init bookshop
+06. it will create a new project by name bookshop
+07. open folder :  /home/user/projects/bookshop
+08. go to terminal and run the command : cds add tiny-sample
+09. it will add the sample content to db/data/my.bookshop-Books.cds, data-model.cds, srv/cat-service.cds files
+10. run the command : npm install --> this will create a folder with node_modules
+11. run the application using the command : cds run, The application will run in the port 4004 with link https://port4004-workspaces-ws-t54rt.us10.trial.applicationstudio.cloud.sap/
+12. command : cds env get folders will give you the default folders 
+    output : { db: 'db/', srv: 'srv/', app: 'app/' }
+13. command : cds env get roots  will give you where the .cds files to check
+    output : [ 'db/', 'srv/', 'app/', 'schema', 'services' ]  --> hardcoded names of files schema and services
+    hence only schema.cds or services.cds will work as default and servered as cds service and no other file names
+    if you want to server other .cds files then put these files into either of default folders ex: db, srv or app
+14. if you run the command cds watch
+    output :     watch
+	PS C:\Users\VAID1KOR\CAP_Projects\mytrial_u001\sample> cds watch
+ 	
+	cds serve all --with-mocks --in-memory? 
+	live reload enabled for browsers 
+	
+      ___________________________
+ 
+
+    	No models found in db/,srv/,app/,schema,services.
+    	Waiting for some to arrive...
+
+15. you can see .cds files are looked into db/,srv/,app/ also hardcoded file names - schema.cds and services.cds
+16. one more special file index.html if this file found in app/ folder then this will be defaulty servered.
+    You can create a empty cds file ex: services.cds / schema.cds and 
+    run the command cds watch
+    output :  This is an automatically generated page.
+	You can replace it with a custom ./app/index.html.
+	now we will create a index.html file inside app/ folder and 
+    run cds watch
+    output : The default page will be rendered for : http://localhost:4004/
+
+17. now create a empty service inside server.cds file as below
+    service say {} and run the command cds watch
+    output : Service Endpoints:
+	/odata/v4/say/ $metadata
+
+    default we will get /odata/v4  service with service name 
+    /odata/v4 is defult path for .cds services
+
+18. run the command : cds env protocols
+    output : {
+  'odata-v4': { path: '/odata/v4' },		--> this is default path you will get it
+  'odata-v2': { path: '/odata/v2' },
+  rest: { path: '/rest' },
+  hcql: { path: '/hcql' }
+}
+
+19. what is difference between function import and actions
+    functions (import functions) can not modify the data      : GET        --> also you should have a handler to serve the service
+    actions modifies the data, actions will have side effects : PUT / POST,
+    You will not able to call Action with GET but use POST
+    ex : service.cds
+         service say {
+  			function hello (to:String) returns String;
+	}
+   
+   create a new file service.js and write below code - 
+	module.exports = (say)=>{
+  		say.on ('hello', req => `Hello ${req.data.to}!`)
+	}
+   OR
+   
+   const sayHello = (say) => {
+    		say.on('hello', (req, res) => {
+        		return 'Hello from : ' + req.data.to;
+    			});
+   		}
+   		
+   module.exports = sayHello;
+
+Session : 4
+
+20. cds compile services.cds --to sql 
+    this will give a how the service will generate the corresponding sql query for table creation
+    ex : 
+       services.cds file having below content
+       service bookshop 
+	{
+    		entity Books {
+        				key id : Integer;
+        				title : String(30);
+    				}
+	}
+	
+	once you run the command -  cds compile services.cds --to sql 
+      it will generate below output
+      CREATE TABLE bookshop_Books (
+  						id INTEGER NOT NULL,
+  						title NVARCHAR(30),
+  						PRIMARY KEY(id)
+						);
+
+	Based on table name you can see its generated based on Service_name + '_' + Entity_name
+      ex: bookshop_Books
+
+Session : 5
+
+21. how to trigger the curd operations - using http file
+    create a test.http file and add the following lines
+     	###
+	# @name BooksQuery
+	GET http://localhost:4004/odata/v4/bookshop/Books
+
+	###
+	# @name BooksInsert
+	POST http://localhost:4004/odata/v4/bookshop/Books
+	Content-Type: application/json
+
+	{"title" : "ABAP"}
+
+	###
+	# @name DeleteEntry
+	@books_id = {{BooksQuery.response.body.value[0].ID}}
+	GET http://localhost:4004/odata/v4/bookshop/Books({{books_id}})
+	
+	###
+	DELETE http://localhost:4004/odata/v4/bookshop/Books({{books_id}})
+
+   Use can also use Thunder client to perform these operations
+   	GET call
+   	GET http://localhost:4004/odata/v4/bookshop/Books
+  
+   	POST call
+	POST http://localhost:4004/odata/v4/bookshop/Books
+	and set the body as 
+	{"title" : "SAP UI5"}
+
+	Delete call
+	http://localhost:4004/odata/v4/bookshop/Books(ID=de97d0bd-b430-4819-bb59-dc761cb3bf12)
+	give the UUID key is without a single/double quotes else you will get error
+	and without body
+ 
+Session : 6
+
+22. Deploy to sqlite database as persistant database sqlite.
+	modify the packages.json file and add the below code
+	"cds": 
+		{ 
+		"requires": 
+			{
+   			"db": {
+      			"kind": "sqlite",
+      			"credentials": { "url": "db.sqlite" } 
+   				}
+			}
+		}
+	Then run cds deploy
+
+
+
+sinity
+   
+    
