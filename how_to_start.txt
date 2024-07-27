@@ -174,6 +174,13 @@ Session : 6
 	give the command : > require("crypto").randomUUID()
 	output  : this will generate the UUID
 
+	also UUID can be generated using cds.utils.UUID()
+	cds repl
+	> cds.utils.uuid()
+	3ee21e2c-c583-47b0-a8df-a642392c7a11
+	
+	control + D to terminate the repl.
+
 24. if you add an additional aspect country in services.cds
 	using { cuid, managed, Country } from '@sap/cds/common';
 	entity Author : cuid {
@@ -231,7 +238,8 @@ Session : 6
   	coalesce(localized_1.name, L_0.name) AS name,
   	coalesce(localized_1.descr, L_0.descr) AS descr,
   	L_0.code
-	FROM (sap_common_Countries AS L_0 LEFT JOIN sap_common_Countries_texts AS localized_1 ON localized_1.code = L_0.code AND localized_1.locale = session_context( '$user.locale' ));
+	FROM (sap_common_Countries AS L_0 LEFT JOIN sap_common_Countries_texts AS localized_1 
+	ON localized_1.code = L_0.code AND localized_1.locale = session_context( '$user.locale' ));
 
 	CREATE VIEW localized_bookshop_Author AS SELECT
   	L.ID,
@@ -245,7 +253,141 @@ Session : 6
   	Countries_0.code
 	FROM localized_sap_common_Countries AS Countries_0; 
 	
-25. 
+25. how to check the tables in sqlite
+	Go to terminal and give the command : sqlite3 db.sqlite
+	user: youtube001 $ sqlite3 db.sqlite
+	SQLite version 3.40.1 2022-12-28 14:03:47
+	Enter ".help" for usage hints.
+	
+	if you want to view all the tables give the command .tables
+	sqlite> .tables
+	bookshop_Author                 localized_bookshop_Countries  
+	bookshop_Books                  localized_sap_common_Countries
+	bookshop_Countries              sap_common_Countries          
+	bookshop_Countries_texts        sap_common_Countries_texts    
+	localized_bookshop_Author 
+	
+	To view the data from table you can use select query.
+	sqlite> select * from bookshop_Author;
+	1308b7d7-7ab1-4d04-aae6-6d4381ada692|Srinivas|
+	c4db9a37-7e39-4460-9bd1-263254a1b25a|Anand|
+	8f4a158a-01a4-4e10-8fee-198f10d32723|Sachin|
+	sqlite> 
+	
+	control + D to come out of sqlite>
+
+Session : 7
+
+26. How to do the profiling
+	User should able to run the application differently from development, production or custom ways
+	modify the package.json file to add the profiles
+	  "cds": {
+    		"requires": {
+      			"db": {
+        				"[testing]" :     { "kind": "sqlite","credentials": { "url": "db.sqlite" } },
+        				"[development]" : { "kind": "sqlite","credentials": { "url": ":memory:" } }
+      				}
+    				}
+  		}
+
+	if you run the command:  cds watch then default development profile will be executed and as we gave :memory: 
+	it will be loaded from .csv files
+	if you run the command:  cds watch --profile testing then testing profile will be executed from db.sqlite
+
+27. What is the differnce between Type and aspect
+	Type : is used to provide a "value" in key:value pair
+	ex: type String20 : String(20);
+	entity Books {
+				ID : Integer;
+				name : String20;  --> instead of using String(20) we can use custom Type as String20.
+			}
+	ex: type Country : Association to sap.common.Countries;
+	entity Author : cuid {
+		name : String(30);
+		authorfrom : Country;	--> even types can have associations
+	}
+
+	aspect : is used to provide a additional fields into entity
+	ex: using { cuid, managed, Country } from '@sap/cds/common';
+	entity Books : cuid {			--> cuid is a aspect and add key ID : UUID extra key-value pair 
+						    in enity Books 
+			title : String(30);
+	}
+	
+	aspect cuid {
+  		key ID : UUID; //> automatically filled in
+	}
+
+28. How to add associations between Books and Authors entity.
+	ex: we will consider Books is connected to Authors using authod_ID feild and we will consider its 1:1 relation
+ 	Each book have single Author
+	
+	service bookshop {
+    		entity Books : cuid {
+        			title : String(30);
+        			author : Association to one Author;
+    			}
+
+    		entity Author : cuid {
+        			name : String(30);
+        			authorfrom : Country;
+    				}
+
+	}
+	when we run the command :  cds compile services.cds --to sql
+	CREATE TABLE bookshop_Books (
+  	ID NVARCHAR(36) NOT NULL,
+  	title NVARCHAR(30),
+  	author_ID NVARCHAR(36),		--> this feild author has been replaced with author_ID and ID is key feild 
+					    for Author table hence author_ID is added
+  	PRIMARY KEY(ID)
+	);
+
+	CREATE TABLE bookshop_Author (
+  	ID NVARCHAR(36) NOT NULL,
+  	name NVARCHAR(30),
+  	authorfrom_code NVARCHAR(3),
+  	PRIMARY KEY(ID)
+	);
+
+	also new navigation property will be added in metadata.
+	You need to modify the bookshop-Books.csv file and add new column author_ID and add the values based on 
+	Authors table
+	  "value": [
+    		{
+      	"ID": "1bb5778e-4a6f-462a-9b64-bf9f7c782bbf",
+      	"title": "Java",
+      	"author_ID": null
+    		},
+	After adding the author_ID in csv file
+	  "value": [
+    	{
+      	"ID": "1bb5778e-4a6f-462a-9b64-bf9f7c782bbf",
+      	"title": "Java",
+      	"author_ID": "1308b7d7-7ab1-4d04-aae6-6d4381ada692"
+    	},
+
+	<EntitySet Name="Books" EntityType="bookshop.Books">
+	<NavigationPropertyBinding Path="author" Target="Author"/>
+	</EntitySet>
+	
+	You can access Authors table using expand query - /odata/v4/bookshop/Books?$expand=author
+	  "value": [
+    	{
+      	"ID": "1bb5778e-4a6f-462a-9b64-bf9f7c782bbf",
+      	"title": "Java",
+      	"author_ID": "1308b7d7-7ab1-4d04-aae6-6d4381ada692",
+      	"author": {
+        		"ID": "1308b7d7-7ab1-4d04-aae6-6d4381ada692",
+        		"name": "Srinivas",
+        		"authorfrom_code": null
+      	}
+    	},
+	
+	You can update the test.http file with below code
+	GET http://localhost:4004/odata/v4/bookshop/Books?$expand=author
+
+29. all code from qmacro is avaialbe in git : https://github.com/qmacro/capb2b.git
 
 
 
