@@ -402,6 +402,161 @@ Session : 7-8
 	and import it in services.cds file
 	using from '@sap/cds-common-content';
 
+Session : 9 & 10
+	
+31. Split the service.cds file to write database (schema) and service saparately
+    provide the namespace in schema.cds file as vxj.database;
+    create a new project - YOUTUBE002
+
+	create a directory : mkdir youtube002
+	Navigate to directory : cd youtube002
+	open folder youtube002
+	initialize the project : cds init --> this will create the default folders 
+	like: db/, app/ and srv and packpage.json file
+	install the dependency for sqlite : run the command : npm add @cap-js/sqlite -D
+	modify the package.json file to point to persistant database : 
+		"cds": 
+		{ 
+		"requires": 
+			{
+   			"db": {
+      			"kind": "sqlite",
+      			"credentials": { "url": "vxjdb.sqlite" } 
+   				}
+			}
+		}
+	run the command : npm install --> this will create a folder with node_modules
+	
+	Add the association between Books and Authors tables using 
+	Books : { ...
+		author : Association to Authors; --> this will create a new column in Books entiry as author_ID
+		}
+	Authors : { ...
+		books : Association to many Books on books.author = $self; --> there is no change in table defination
+                 }
+
+	
+	create main.cds file inside srv/ folder
+	inside main.cds we can bring the schema from db/schema.cds file using
+	using { vxj.database as vxjdb }  from '../db/schema';  --> here we can define the alias for vxj.database as vxjdb
+	and refer vxjdb to get Books and Authors entiry
+	
+	when you create a service in .cds file then it will create the VIEWS corresponding to entity tables
+	ex: 
+	using { vxj.database as vxjdb }  from '../db/schema';
+	service bookshop {
+    				entity Books as projection on vxjdb.Books;
+    				entity Authors as projection on vxjdb.Authors;
+				}
+	if you view the preview as sql then you will see below details
+	
+	Below 2 tables are coming because of line --> using { vxj.database as vxjdb }  from '../db/schema';
+	Below 2 views are coming because of service is having projection on
+	view name is based on service name (bookshop_)
+
+	CREATE TABLE vxj_database_Books (
+  	ID NVARCHAR(36) NOT NULL,
+  	title NVARCHAR(30),
+  	author_ID NVARCHAR(36),
+  	PRIMARY KEY(ID)
+	);
+
+	CREATE TABLE vxj_database_Authors (		--> view is created because of service is having projection on
+  	ID NVARCHAR(36) NOT NULL,
+  	name NVARCHAR(30),
+  	PRIMARY KEY(ID)
+	);
+
+	CREATE VIEW bookshop_Books AS SELECT	
+  	Books_0.ID,
+  	Books_0.title,
+  	Books_0.author_ID
+	FROM vxj_database_Books AS Books_0;
+
+	CREATE VIEW bookshop_Authors AS SELECT	--> view is created because of service is having projection on
+  	Authors_0.ID,
+  	Authors_0.name
+	FROM vxj_database_Authors AS Authors_0;
+
+	to remove empty directory use can use command : rmdir <dirname>
+	to remove directory with sub directory and files : rm -r <dirname> : 
+	make sure you navigate to parent directory first.
+
+	we will load the data to Books and Authors entiry tables
+	To generate UUID you can make use of repl in terminal
+	give the command : cds repl
+	Welcome to cds repl v 7.9.4 
+	> cds.utils.uuid()
+	f821f22c-dbad-4a8f-871f-f82c00baf942
+	control + D to come out of cds repl
+
+	remove below content from package.json file
+	
+	"cds": 
+	{ 
+	"requires": 
+		{
+		"db": {
+		"kind": "sqlite",
+		"credentials": { "url": "vxjdb.sqlite" } 
+			}
+		}
+	}
+	
+	now if you run cds watch : the default it will run from :memory database
+
+	we will deploy to persitant layer and now update package.json file
+ 
+	"cds": 
+	{ 
+	"requires": 
+		{
+		"db": {
+		"kind": "sqlite",
+		"credentials": { "url": "vxjdb.sqlite" } 
+			}
+		}
+	}
+	now try to run the command : cds watch
+	The service will be running but if you try to click on Books you will get error
+	
+	<error xmlns="http://docs.oasis-open.org/odata/ns/metadata">
+	<code>500</code>
+	<message>no such table: bookshop_Books in: 
+	SELECT json_insert('{}','$."ID"',ID,'$."title"',title,'$."author_ID"',author_ID) as _json_ FROM 
+	(SELECT Books.ID,Books.title,Books.author_ID FROM bookshop_Books as Books ORDER BY Books.ID ASC LIMIT ?)</message>
+	</error>
+	
+	Because now Books table is trying to access from vxjdb.sqlite persitant file. 
+	To fix this issue you need to deploy it using
+	Then run command : cds deploy --profile testing : --> to reflect the schema.cds into persitant vxjdb file
+	with table structure
+	Note : If you have added profiles then you need to use --profile while deploying as well.
+	after changing the package.json file
+	"cds": {
+	"requires": {
+		"db": {
+				"[testing]" :     { "kind": "sqlite","credentials": { "url": "vxjdb.sqlite" } },
+				"[development]" : { "kind": "sqlite","credentials": { "url": ":memory:" } }
+			}
+			}
+	}
+
+
+32. Difference Between Association and Composition
+	Association : will work with 2 independent entities where there may or may not have direct relationship
+	ex: Books and Authors these can be 2 independed activies and may not have any relation / connection between them
+	In such case we can build the relation using Association by adding Association to Entity_Name
+
+	Composition: will work with 2 dependent entities where there will be a relation between 2 entities
+	ex: OrderHeader and OrderLine entities
+	composition is written with of keywork like Composition of Entity_Name
+
+
+33.
+
+
+
 sinity
    
     
