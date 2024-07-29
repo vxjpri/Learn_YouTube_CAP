@@ -402,7 +402,7 @@ Session : 7-8
 	and import it in services.cds file
 	using from '@sap/cds-common-content';
 
-Session : 9 & 10
+Session : 9
 	
 31. Split the service.cds file to write database (schema) and service saparately
     provide the namespace in schema.cds file as vxj.database;
@@ -553,9 +553,79 @@ Session : 9 & 10
 	composition is written with of keywork like Composition of Entity_Name
 
 
-33.
+Session 10
 
+33. added the Composition logic to schema.cds file
+	entity Orders : cuid {
+    		comments : String(20);
+    		Items : Composition of many OrderItems on Items.parent = $self;
+	}
 
+	entity OrderItems  {
+    		key parent : Association to Orders;
+    		key pos : Integer;
+    		quantity : Integer;
+	}
+
+	Added only Orders entity into main.cds file
+	entity Orders as projection on vxjdb.Orders;
+
+	add the data to Orders and OrderItems tables 
+	0dfffa4b-7a5b-4dfa-80d7-066329113f26
+	4f6c7016-bbd0-4c04-8015-1dcbdbd3c323
+	
+	run the command : cds watch
+	You will able to view the data loading from in memory database. and you will able to view the Orders data
+	
+	we have exposed only Orders entity but we have not exposed OrderItems entity in main.cds file
+	As Compositions have a special things - Composition Targets (OrderItems) are auto-exposed in service interface.
+	hence we will able to view the data of OrderItems by using expand=OrderItems
+	You can see this in metadata as well
+	<EntityType Name="Orders">
+	<Key>
+	<PropertyRef Name="ID"/>
+	</Key>
+	<Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+	<Property Name="comments" Type="Edm.String"/>
+	<NavigationProperty Name="Items" Type="Collection(bookshop.OrderItems)" Partner="parent">
+	<OnDelete Action="Cascade"/>
+	</NavigationProperty>
+	</EntityType>
+
+	<EntityType Name="OrderItems">
+	<Key>
+	<PropertyRef Name="parent_ID"/>
+	<PropertyRef Name="pos"/>
+	</Key>
+	<NavigationProperty Name="parent" Type="bookshop.Orders" Partner="Items">
+	<ReferentialConstraint Property="parent_ID" ReferencedProperty="ID"/>
+	</NavigationProperty>
+
+	<Property Name="parent_ID" Type="Edm.Guid" Nullable="false"/>
+	<Property Name="pos" Type="Edm.Int32" Nullable="false"/>
+	<Property Name="quantity" Type="Edm.Int32"/>
+	</EntityType>
+	
+	and if you do a preview of main.cds as yaml you will see the property
+	  bookshop.OrderItems: 
+    	  kind: entity
+    	 '@cds.autoexposed': true	--> default autoexposed (past tense)
+	
+	You can use ?$expand=Items
+	https://port4004-workspaces-ws-t54rt.us10.trial.applicationstudio.cloud.sap/odata/v4/bookshop/Orders?$expand=Items
+	and you will able to view the data for OrderItems as well
+	
+	still if you want to auto-expose the OrderItems you can make use of annotations
+	do the changes in schema.cds and add below line before OrderItems entity
+	@cds.autoexpose		--> just add this line
+	entity OrderItems  {
+   	 	key parent : Association to Orders;
+    		key pos : Integer;
+    		quantity : Integer;
+		}
+	and you will able to see OrderItems → Fiori preview : which was not there previously
+
+Session 11
 
 sinity
    
