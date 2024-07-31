@@ -627,6 +627,42 @@ Session 10
 
 Session 11
 
+34. How to checking if localhost 4004 is already using and would like to kill
+	user: youtube002 $ lsof -i tcp:4004
+	COMMAND  PID USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
+	node    4638 user   25u  IPv6 6667854      0t0  TCP *:4004 (LISTEN)
+
+	user: youtube002 $ kill -9 4638
+	user: youtube002 $ lsof -i tcp:4004
+
+
+35. Instead of creating 2 different entities and create a composition between, we can do the same using single entity
+	entity SalesOrder : cuid {
+    	description : String(30);
+    	Items       : Composition of many {
+                      key pos      : Integer;
+                          book     : Association to Books;
+                          quantity : Integer;
+                  	}
+	}
+
+	In this case below 2 tables will be created and there is no need to provide the parent key field
+	The system will automatically create a new feild call up__<key> : key of parent node
+	
+	CREATE TABLE vxj_database_SalesOrder (
+  		ID NVARCHAR(36) NOT NULL,
+  		description NVARCHAR(30),
+  		PRIMARY KEY(ID)
+	);
+
+	CREATE TABLE vxj_database_SalesOrder_Items (
+  		up__ID NVARCHAR(36) NOT NULL,
+  		pos INTEGER NOT NULL,
+  		book_ID NVARCHAR(36),
+  		quantity INTEGER,
+  		PRIMARY KEY(up__ID, pos)
+	); 
+
 sinity
    
     
