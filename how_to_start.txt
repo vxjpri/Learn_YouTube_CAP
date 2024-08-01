@@ -663,6 +663,92 @@ Session 11
   		PRIMARY KEY(up__ID, pos)
 	); 
 
+Session 12 
+
+36. If you want to do custom implementation/logic for cds file you can provide it using the .js files
+	Your cds file is srv/main.cds then in the path create a same file with .js extension file as srv/main.js
+	Run the command : cds watch
+	You can see the implementation is registered and ready to use from the file main.js. 
+	[cds] - serving bookshop { impl: 'srv/main.js', path: '/odata/v4/bookshop' }
+
+	Alternate way is using @impl in srv/main.cds file
+	@impl : 'srv/banana.js'  --> if you want to implement the custom logic in other file ex: banana.js file
+
+	Added below logic in main.js
+	console.log("I am inside main.js");
+	const cds = require('@sap/cds');
+
+	module.exports = () => {
+    		console.log("i am inside exports");
+	}
+	
+	will get both console.log();
+
+	You can use 3 mothods - on. | .before | and .after
+	srv. on, before, after()
+	
+	function srv.on/before/after (
+  		event   : string | string[] | '*',
+  		entity? : CSN definition | CSN definition[] | string | string[] | '*',
+  		handler : function
+	)
+	
+	ex: 
+	this.after ('READ',Books, books => {...})
+	srv.after
+	event 	: READ
+	entity? 	: Books
+	handler	: books => {...}
+
+	module.exports = cds.service.impl((srv) => {
+    		console.log("i am inside impl");
+    
+		srv.on('READ', 'Books', (req, next) => {
+      	  	console.log("I am inside srv.on");
+        		return next()
+    		})
+	});
+
+Session 13
+
+37. why we need to provide a return statment in module.exports 
+	The module.exports can be written in multiple ways
+	
+	A.
+	  module.exports = cds.service.impl((srv) => {
+	    	console.log("i am inside impl");
+
+	     	srv.on('READ', 'Books', (req, next) => {
+	         	console.log("I am inside srv.on");
+	         	return next()
+	     		})
+ 	  });
+
+	B. Required return when there is block of code in {}
+
+	  module.exports = cds.service.impl(function () {
+    		console.log("i am inside impl");
+    		
+		this.on('READ', 'Books', (req, next) => {
+        		console.log("I am inside this.on");
+        		return next();
+    		});
+	  });
+
+	C. Removed the return key word - still this will return the data. 
+	   Because inline arrow function does not required return.
+	   Required return when there is block of code
+
+	  module.exports = cds.service.impl(function () {
+    		console.log("i am inside impl");
+    
+		this.on('READ', 'Books', (req, next) => next());
+	  });
+
+Session 14
+
+
+
 sinity
    
     
