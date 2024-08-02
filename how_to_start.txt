@@ -850,6 +850,76 @@ Session 14
 
 Session 15
 
+43. How to add virtual feilds 
+	This can be done using extend in .cds file
+	
+	add the below code in main.cds
+	extend vxjdb.Books with {
+    		virtual urgency : String
+	} 
+	
+	After adding this virtual feild you can see it in $metadata
+	
+	<EntityType Name="Books">
+	<Key>
+		<PropertyRef Name="ID"/>
+	</Key>
+	<Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+	<Property Name="title" Type="Edm.String" MaxLength="30"/>
+
+	<NavigationProperty Name="author" Type="bookshop.Authors" Partner="books">
+		<ReferentialConstraint Property="author_ID" ReferencedProperty="ID"/>
+	</NavigationProperty>
+
+	<Property Name="author_ID" Type="Edm.Guid"/>
+	<Property Name="urgency" Type="Edm.String"/>
+	</EntityType>
+
+	<Annotations Target="bookshop.Books/urgency">
+		<Annotation Term="Core.Computed" Bool="true"/>
+	</Annotations>
+	
+	New feild added : <Property Name="urgency" Type="Edm.String"/>
+	also : <Annotation Term="Core.Computed" Bool="true"/>
+	
+	add the below code in main.js
+
+	module.exports = cds.service.impl(function () {
+    		const changeUrgency = (data) => {
+        	vxjlog(data);
+
+        		if(data) {
+            		const bks = Array.isArray(data) ? data : [data];
+            		bks.forEach((bk) => {
+                			if(bk.title?.toLowerCase().includes("html")) {
+                    		bk.urgency = "High";
+                			}
+            		})
+        		}
+    		}
+
+    		// this.after('each', 'Books', (data, req) => {
+    		//     vxjlog("The Book Record : \n", data);
+    		// });
+
+    		this.after('READ', 'Books', (data, req) => {
+        		changeUrgency(data)		--> we are calling custom function all changeUrgency()
+    		});
+
+	// This can be called in other way as well
+		this.after('READ', 'Books', changeUrgency);
+	});
+
+	Output:
+	{
+      	"ID": "ee70bd5f-9996-4fb9-ae5e-ef0936ed7998",
+      	"title": "HTML",
+      	"author_ID": "c631b418-f0bf-472e-b055-e7a3269f08a4",
+      	"urgency": "High"
+    	},
+
+
+Session 16
 
 
 sinity
