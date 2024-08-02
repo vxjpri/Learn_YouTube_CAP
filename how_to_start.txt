@@ -747,6 +747,109 @@ Session 13
 
 Session 14
 
+38. Function parameters for this.on / this.before and this.after
+	this.on
+	function srv.on (event, entity?, 
+				handler: (
+  						req  : cds.Request,
+  						next : function
+						)
+			     )
+
+	this.before
+	function srv.before (event, entity?, 
+				handler: (
+  						req : cds.Request
+						))
+
+	this.after
+	function srv.after (event, entity?, 
+				handler: (
+  						results : object[] | any,
+  						req     : cds.Request
+						))
+		
+	event : 'CREATE' / POST / INSERT, 'READ' / GET / SELECT, 'UPDATE' / PUT / PATCH, 'UPSERT','DELETE'
+		: each can be used with srv.after('READ')
+		: custom events ex: submitOrder -- srv.before('submitOrder', ...)
+
+39. this.after call
+	module.exports = cds.service.impl(function () {
+    		console.log("i am inside impl");
+    		
+		this.after('READ', 'Books', (data, req) => {
+        		console.log("The Books data : \n", data);
+    		});
+	});
+
+	The next() is not required to call in this.after(). There is no such next() function avaiable in this.after() method
+	this.after is having 2 handlers - results and req and default results is send back.
+
+40. How to create custom log records
+	Define a logger using cds
+	const vxjlog = cds.log('mylogs'); --> You can give any name
+	
+	console.log("I am inside main.js");
+	vxjlog.log("i am inside impl");
+	vxjlog("test");				--> You can write without log() as well
+	vxjlog.log("The Books data : \n", data);
+	
+	instead of console.log() we have added vxjlog.log()
+	Outout : 
+	I am inside main.js		--> This is coming from console.log()
+	[mylogs] - i am inside impl	--> This is coming from vxjlog.log() with the name as [mylogs]
+
+
+
+41. How to modify the data for this.after() method and send the response back as an array data ex: data[].	
+	if you want you can modify the results  
+	
+	module.exports = cds.service.impl(function () {
+    		vxjlog.log("i am inside impl");
+//  		vxjlog("test");
+
+    		this.after('READ', 'Books', (data, req) => {
+        		data.map((book) => {
+            					book.title += ' Advance'; 
+        					});
+	
+       	vxjlog.log("The Books data : \n", data);
+
+    		});
+	});
+
+	You can use below logic as well - 
+	Inside READ you can use arrow function and modify the data OR
+	use this.after with each 
+
+	this.after ('READ', Books, books => {
+  			for (let b of books) if (b.stock > 111) b.discount = '11%'
+	})
+
+	this.after ('each', Books, book => {
+  		if (book.stock > 111) book.discount = '11%'
+	})
+	ex:
+	
+42. if you use this.after('each','Books', (data, req) => {});
+	each : will return an independent object instaed of array.
+	ex: 
+	[odata] - GET /odata/v4/bookshop/Books 
+	[mylogs] - The Book Record : 
+ 	{
+  		ID: '1296a89c-4bc0-4475-bc8d-246866e55b77',
+  		title: 'ABAP',
+  		author_ID: 'e9067a4e-82f3-4b9e-b718-258df1d0bffa'
+	}
+	[mylogs] - The Book Record : 
+ 	{
+  		ID: 'e031e279-6610-49a4-af36-d205f927c81b',
+  		title: 'VB',
+  		author_ID: 'd3843a2a-88fe-48e3-94ee-56fd88bcc0d2'
+	}
+
+Session 15
+
 
 
 sinity
