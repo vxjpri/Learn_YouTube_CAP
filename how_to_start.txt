@@ -1009,7 +1009,36 @@ Session 16 & 17
         	return result.total
     	})
 
-	B.
+Session 18
+
+47.	B. Bound Function:
+		Modify the Books entity add additional column price and we will try to calculate stockValue as 
+		stock * price;
+		
+		added below logic in main.cds
+		entity Books as projection on vxjdb.Books actions {
+        		function stockValue() returns Integer;
+    		};
+		
+		if you run the $metadata : You will see IsBound = true - hence this is Bound Function.
+		This is bound to the entity Books. and we have parameter name as 'in' for type : Books
+		here we will have only Function Name but there is no Function Import
+
+		<Function Name="stockValue" IsBound="true" IsComposable="false">
+			<Parameter Name="in" Type="bookshop.Books"/>
+			<ReturnType Type="Edm.Int32"/>
+		</Function>
+		
+		added below logic in main.js
+		this.on('stockValue', Books, () => 100);
+		
+		to call the function stockValue() we need to call to Books entity and to specific ID
+		ex: http://localhost:4004/odata/v4/bookshop/Books(1296a89c-4bc0-4475-bc8d-246866e55b77)/stockValue()
+		OR
+		https://port4004-workspaces-ws-t54rt.us10.trial.applicationstudio.cloud.sap
+		/odata/v4/bookshop/Books(1296a89c-4bc0-4475-bc8d-246866e55b77)/stockValue()
+
+Session 19
 
 
 sinity
