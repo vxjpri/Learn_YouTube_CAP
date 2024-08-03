@@ -919,7 +919,97 @@ Session 15
     	},
 
 
-Session 16
+Session 16 & 17
+
+44.  What are action and functions in specific to Odata
+	Functions : 
+		Will not have side effects, 
+		are called using GET call
+		in $metadata will be referred as FunctionImport and Isbound = false
+		
+	Actions : 
+		May have side effects. 
+		are called using POST call
+
+	enclosed within Actions as Action or function : always called with POST
+	Bound Function: always refer to entiry
+	Bound Action : always refer to entiry
+	
+	written independely functions or actions : 
+	Unbound Action : independent function without any entity
+	Unbound Function: independent function without any entity
+
+	Modify the books entity and add additional feild stock also update the books.csv file
+	get the entity as object using cds.entities('bookshop')
+	const {Books} = cds.entities('bookshop');
+	
+	you can use this Books entity in this.on/.after function of 2nd parameter in main.js
+	ex: this.after('READ',Books,changeUrgency) instead of  --> Books is provided as Object
+	    this.after('READ', 'Books', changeUrgency);		 --> Books is provided as String
+
+	this.on('totalStock', () => 99);
+	
+	main.cds file
+	function totalStock() returns Integer;
+
+45. use of cds repl
+	user: youtube002 $ cds repl
+	Welcome to cds repl v 7.9.4 
+	> await cds.test()
+	This will run the service in localhost with different port no
+	[cds] - server listening on { url: 'http://localhost:36521' }
+	
+	> cds.entities
+	[object Function]
+	
+	> for (x in cds.entities) console.log(x)
+	Books
+	Authors
+	Orders
+	OrderItems
+	SalesOrder
+	SalesOrder.Items
+	>
+	
+
+46. Examples of Functions and Actions with Bound and Unbound.
+	A. Unbound Function :
+		main.cds file
+		function totalStock() returns Integer;	
+	
+		main.js file
+		module.exports = cds.service.impl(function () {
+			this.on('totalStock', () => 99);
+		});
+
+	Call the function (Function Import) in the url :
+	https://port4004-workspaces-ws-t54rt.us10.trial.applicationstudio.cloud.sap/odata/v4/bookshop/totalStock()
+	OR
+	http://localhost:4004/odata/v4/bookshop/totalStock()
+
+	Output:
+	{
+  		"@odata.context": "$metadata#Edm.Int32",
+  		"value": 99
+	}
+	
+	In metadata you can see
+	<FunctionImport Name="totalStock" Function="bookshop.totalStock"/>
+	
+	<Function Name="totalStock" IsBound="false" IsComposable="false"> --> You can see the property IsBound = false
+		<ReturnType Type="Edm.Int32"/>
+	</Function>
+	
+
+	Hence this is Un-bound funtion.
+	
+	write below logic in main.js
+	this.on('totalStock', async () => {
+        	const result = await SELECT .one .from(Books) .columns('sum(stock) as total')
+        	return result.total
+    	})
+
+	B.
 
 
 sinity
