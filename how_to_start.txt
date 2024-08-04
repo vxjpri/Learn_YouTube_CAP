@@ -1009,7 +1009,7 @@ Session 16 & 17
         	return result.total
     	})
 
-Session 18
+Session 18 19 & 20
 
 47.	B. Bound Function:
 		Modify the Books entity add additional column price and we will try to calculate stockValue as 
@@ -1038,7 +1038,53 @@ Session 18
 		https://port4004-workspaces-ws-t54rt.us10.trial.applicationstudio.cloud.sap
 		/odata/v4/bookshop/Books(1296a89c-4bc0-4475-bc8d-246866e55b77)/stockValue()
 
-Session 19
+48.	C. Bound Action:
+		Add the action setPrice() function for the entity Books in main.cds file
+		entity Books as projection on vxjdb.Books actions {
+        		function stockValue() returns Integer;			--> Bound Function
+
+        		action setPrice(iPrice : Integer) returns Books;	--> Bound Action
+    		};
+
+		Add below login in main.js
+		this.on('setPrice', Books, async (req) => {
+        		const id = req.params[0];
+        		vxjlog(req.data, id)
+
+        		await UPDATE (Books, id)
+        		.with ({
+            		price : req.data.iPrice
+        		})
+
+        		return await SELECT (Books, id)
+    		});
+
+		instead of req as parameter we can use destructing with ({params:[id]})
+		
+		this.on('setPrice', Books, async ({params:[id]}) => {
+        		const id = req.params[0];
+        		vxjlog(req.data, id)
+
+        		await UPDATE (Books, id)
+        		.with ({
+            		price : req.data.iPrice
+        		})
+
+        		return await SELECT (Books, id)
+    		});
+
+		To call the action we need to use POST call without ()
+		ex: for setPrice there is no braket as this is not a function its an action. 
+		### in test.http file
+		# @name setPrice
+		POST http://localhost:4004/odata/v4/bookshop/Books(1296a89c-4bc0-4475-bc8d-246866e55b77)/setPrice
+		Content-Type: application/json
+		
+		{
+    			"iPrice" : 25
+		}
+
+		###
 
 
 sinity
