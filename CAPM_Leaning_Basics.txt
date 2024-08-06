@@ -1,0 +1,67 @@
+01. SAP Learning Journey 
+	https://learning.sap.com/learning-journeys/getting-started-with-sap-cloud-application-programming-model
+
+02. Git hub repository
+	https://github.com/SAP-samples/cap-development-learning-journey
+	Use each branch to learn more about it
+
+03. Create a Dev space - Full stack and start building the project
+04. Create a cap project either using start template or using Terminal - cds init
+05. once project is created run the command : npm install - to create the node_module
+06. run the command cds watch to execute the project
+07. add the below code in package.json
+	"cds": {
+    "requires": {
+      "db": {
+        "[development]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": ":memory:"
+          }
+        },
+        "[testing]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": "vjcap01.sqlite"
+          }
+        }
+      }
+    }
+  }
+
+08. run the command cds deploy --profile testing  
+	this will create a persitant database file : vjcap01.sqlite
+09. run the command cds watch --profile testing
+	this will run your application from persitant database
+	if you wnat to run your app from in-memory database just give the command : cds watch 
+10. Added the association from Books to Authors entity
+11. Added the aspects cuid and managed for both Books and Authors entity
+12. to add the validation to Books entity we try to added the annotation @mandatory for title in Books Entity
+	title       : String @mandatory; 
+	genre       : Genre @assert.range : true;
+	author      : Association to one Authors @mandatory @assert.target;
+	stock       : Integer default 0;  --> set the value as default if user don;t pass the value
+	
+	same way did for Authors entity
+	entity Authors : cuid, managed {
+   	 	name          : String @mandatory;
+13. To preventing the con-currency updated we can make use of ETags
+	added the Etag annotations to Books and Authors entity
+	
+	annotate Books with {
+    			modifiedAt @odata.etag
+	}
+
+	annotate Authors with {
+    		modifiedAt @odata.etag
+	}
+
+14. 
+
+
+
+
+
+
+Udemy - 
+S...y#2......8
